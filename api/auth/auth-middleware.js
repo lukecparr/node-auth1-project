@@ -1,3 +1,5 @@
+const Users = require('../users/users-model');
+
 /*
   If the user does not have a session saved in the server
 
@@ -6,7 +8,8 @@
     "message": "You shall not pass!"
   }
 */
-function restricted() {
+function restricted(req, res, next) {
+  next();
 
 }
 
@@ -18,20 +21,24 @@ function restricted() {
     "message": "Username taken"
   }
 */
-function checkUsernameFree() {
+function checkUsernameFree(req, res, next) {
+  next();
 
 }
 
-/*
-  If the username in req.body does NOT exist in the database
 
-  status 401
-  {
-    "message": "Invalid credentials"
-  }
-*/
-function checkUsernameExists() {
+function checkUsernameExists(req, res, next) {
+  const { username } = req.body;
 
+  Users.findBy({username}).first()
+    .then((user) => {
+      if (user) {
+        req.user = user;
+        next();
+      } else {
+        res.status(401).json({ message: 'Invalid credentials'})
+      }
+    })
 }
 
 /*
@@ -42,8 +49,15 @@ function checkUsernameExists() {
     "message": "Password must be longer than 3 chars"
   }
 */
-function checkPasswordLength() {
+function checkPasswordLength(req, res, next) {
+  next();
 
 }
 
-// Don't forget to add these to the `exports` object so they can be required in other modules
+
+module.exports = {
+  restricted,
+  checkUsernameFree,
+  checkUsernameExists,
+  checkPasswordLength
+}

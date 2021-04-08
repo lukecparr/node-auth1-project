@@ -1,48 +1,36 @@
-// Require `checkUsernameFree`, `checkUsernameExists` and `checkPasswordLength`
-// middleware functions from `auth-middleware.js`. You will need them here!
+const router = require('express').Router();
+const Users = require('../users/users-model');
+const mw = require('./auth-middleware');
+const bcrypt = require('bcryptjs');
+
+router.post('/register', mw.checkUsernameFree, mw.checkPasswordLength, (req, res, next) => {  
+  const newUser = req.body;
+
+  const hash = bcrypt.hashSync(newUser.password, 8);
+  newUser.password = hash;
+
+  Users.add(newUser)
+    .then((createdUser) => res.status(201).json(createdUser))
+    .catch(next);
+
+})
 
 
-/**
-  1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
+router.post('/login', mw.checkUsernameExists, (req, res, next) => {
+  const creds = req.body
+  const storedUser = req.user;
 
-  response:
-  status 200
-  {
-    "user_id": 2,
-    "username": "sue"
-  }
+	if (req.user && bcrypt.compareSync(creds.password, storedUser.password)) {
+		res.status(200).json({ message: `Welcome ${storedUser.username}!` });
+	} else {
+		res.status(401).json({ message: 'Invalid credentials' });
+	}
 
-  response on username taken:
-  status 422
-  {
-    "message": "Username taken"
-  }
+});
 
-  response on password three chars or less:
-  status 422
-  {
-    "message": "Password must be longer than 3 chars"
-  }
- */
-
-
-/**
-  2 [POST] /api/auth/login { "username": "sue", "password": "1234" }
-
-  response:
-  status 200
-  {
-    "message": "Welcome sue!"
-  }
-
-  response on invalid credentials:
-  status 401
-  {
-    "message": "Invalid credentials"
-  }
- */
-
-
+router.get('/logout', (req, res, next) => {
+  
+});
 /**
   3 [GET] /api/auth/logout
 
@@ -59,5 +47,4 @@
   }
  */
 
- 
-// Don't forget to add the router to the `exports` object so it can be required in other modules
+module.exports = router;
