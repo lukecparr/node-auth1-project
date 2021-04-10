@@ -21,6 +21,8 @@ router.post('/login', mw.checkUsernameExists, (req, res, next) => {
   const storedUser = req.user;
 
 	if (req.user && bcrypt.compareSync(creds.password, storedUser.password)) {
+    req.session.user = storedUser;
+    
 		res.status(200).json({ message: `Welcome ${storedUser.username}!` });
 	} else {
 		res.status(401).json({ message: 'Invalid credentials' });

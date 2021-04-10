@@ -1,6 +1,9 @@
 const express = require("express");
+const session = require('express-session');
 const helmet = require("helmet");
 const cors = require("cors");
+
+const { restricted } = require('./auth/auth-middleware');
 
 const userRouter = require('./users/users-router');
 const authRouter = require('./auth/auth-router');
@@ -20,11 +23,24 @@ const authRouter = require('./auth/auth-router');
 
 const server = express();
 
+const sessionConfig = {
+  name: 'chocolatechip',
+  secret: 'chunky soft warm',
+  cookie: {
+    maxAge: 60 * 60 * 1000,
+    secure: false,
+    httpOnly: true,
+  },
+  resave: false,
+  saveUninitialized: false
+};
+
 server.use(helmet());
 server.use(express.json());
 server.use(cors());
+server.use(session(sessionConfig));
 
-server.use('/api/users', userRouter);
+server.use('/api/users', restricted, userRouter);
 server.use('/api/auth', authRouter);
 
 server.get("/", (req, res) => {
