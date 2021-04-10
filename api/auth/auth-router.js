@@ -16,13 +16,13 @@ router.post('/register', mw.checkUsernameFree, mw.checkPasswordLength, (req, res
 })
 
 
-router.post('/login', mw.checkUsernameExists, (req, res, next) => {
+router.post('/login', mw.checkUsernameExists, (req, res) => {
   const creds = req.body
   const storedUser = req.user;
 
 	if (req.user && bcrypt.compareSync(creds.password, storedUser.password)) {
     req.session.user = storedUser;
-    
+
 		res.status(200).json({ message: `Welcome ${storedUser.username}!` });
 	} else {
 		res.status(401).json({ message: 'Invalid credentials' });
@@ -30,23 +30,15 @@ router.post('/login', mw.checkUsernameExists, (req, res, next) => {
 
 });
 
-router.get('/logout', (req, res, next) => {
-  
+router.get('/logout', (req, res) => {
+	if (req.session?.user) {
+		req.session.destroy(() => {
+			res.status(200).json({ message: 'logged out' });
+		});
+	} else {
+		res.status(500).json({ message: 'no session' });
+	}
 });
-/**
-  3 [GET] /api/auth/logout
 
-  response for logged-in users:
-  status 200
-  {
-    "message": "logged out"
-  }
-
-  response for not-logged-in users:
-  status 200
-  {
-    "message": "no session"
-  }
- */
 
 module.exports = router;
